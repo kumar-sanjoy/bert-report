@@ -1,0 +1,53 @@
+
+% =============================================================================
+\section{High-Level Architecture Overview}
+\label{sec:arch}
+% =============================================================================
+
+This section briefly describes \bert{}'s architecture. Detailed analysis of each
+component will be covered in the subsequent team sections.
+
+\subsection{Input Representation}
+
+\bert{} constructs each input token's embedding as the sum of three learned
+components~\cite{devlin2019bert}:
+\begin{equation}
+  E_{\text{input}}
+    = E_{\text{token}} + E_{\text{segment}} + E_{\text{position}}
+  \label{eq:input}
+\end{equation}
+where $E_{\text{token}}$ is a WordPiece~\cite{wu2016wordpiece} subword embedding
+($|V| \approx 30{,}000$), $E_{\text{segment}}$ distinguishes sentence~$A$ from
+sentence~$B$ in a paired input, and $E_{\text{position}}$ is a learned
+positional embedding. A special \cls{} token is prepended to every input;
+\sep{} marks sentence boundaries.
+
+\subsection{Encoder Stack}
+
+\bert{} stacks $N$ identical Transformer encoder layers
+(Section~\ref{sec:transformer}). Each layer applies multi-head self-attention
+(Eq.~\ref{eq:multihead}), Add \& Norm, a feed-forward sublayer, and another
+Add \& Norm. Two standard configurations were released:
+
+\begin{table}[H]
+\centering
+\caption{\bert{} model variants~\cite{devlin2019bert}.}
+\label{tab:bert_variants}
+\begin{tabular}{lcccc}
+  \toprule
+  \textbf{Variant}
+    & \textbf{Layers ($N$)}
+    & \textbf{Hidden size ($d$)}
+    & \textbf{Heads ($h$)}
+    & \textbf{Parameters} \\
+  \midrule
+  \bert{}\textsubscript{BASE}  & 12 & 768  & 12 & $\approx$110M \\
+  \bert{}\textsubscript{LARGE} & 24 & 1024 & 16 & $\approx$340M \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The output of the final encoder layer provides one contextual embedding per
+input token. These embeddings are consumed by the task-specific heads described
+in Section~\ref{sec:turning_point}.
