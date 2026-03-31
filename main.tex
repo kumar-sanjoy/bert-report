@@ -1,0 +1,197 @@
+% ============================================================
+%  Inside BERT: Architecture, Pre-training, and Fine-tuning
+%  CSE Technical Report — Bangladesh University of Engineering
+%  and Technology (BUET)
+% ============================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% ---- Encoding & Fonts ----------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}          % Improved typography
+
+% ---- Page Layout ---------------------------------------------
+\usepackage[
+  a4paper,
+  top=2.5cm, bottom=2.5cm,
+  left=2.5cm, right=2.5cm,
+  headheight=14pt
+]{geometry}
+
+% ---- Mathematics ---------------------------------------------
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{bm}                 % Bold math symbols
+
+% ---- Graphics & Figures --------------------------------------
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage[labelfont=bf, font=small, justification=centering]{caption}
+\usepackage{tikz}
+
+% ---- Tables --------------------------------------------------
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage[table, dvipsnames]{xcolor}
+
+% ---- Lists ---------------------------------------------------
+\usepackage{enumitem}
+\setlist[itemize]{noitemsep, topsep=4pt}
+\setlist[enumerate]{noitemsep, topsep=4pt}
+
+% ---- Code Listings -------------------------------------------
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{NavyBlue}\bfseries,
+  commentstyle=\color{Gray}\itshape,
+  stringstyle=\color{BrickRed},
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{Gray},
+  xleftmargin=2em
+}
+
+% ---- Algorithms -----------------------------------------------
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algrenewcommand\algorithmicindent{0.9em}
+
+% ---- Cross-referencing & Hyperlinks --------------------------
+\usepackage[
+  colorlinks=true,
+  linkcolor=NavyBlue,
+  citecolor=NavyBlue,
+  urlcolor=NavyBlue
+]{hyperref}
+\usepackage{cleveref}
+
+% ---- Headers & Footers ---------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Inside BERT}}
+\fancyhead[R]{\small\textit{Department of CSE, BUET}}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---- Section Formatting --------------------------------------
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.8em}{}[\vspace{-0.3em}\rule{\linewidth}{0.4pt}]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.8em}{}
+\titleformat{\subsubsection}{\normalsize\itshape\bfseries}{\thesubsubsection}{0.8em}{}
+
+% ---- Abstract Box --------------------------------------------
+\usepackage{mdframed}
+\newmdenv[
+  linewidth=0.6pt,
+  linecolor=NavyBlue!60,
+  backgroundcolor=NavyBlue!5,
+  innertopmargin=10pt,
+  innerbottommargin=10pt,
+  innerleftmargin=12pt,
+  innerrightmargin=12pt,
+  skipabove=8pt,
+  skipbelow=8pt
+]{abstractbox}
+
+% ---- Theorem-like Environments -------------------------------
+\newtheorem{definition}{Definition}[section]
+\newtheorem{remark}{Remark}[section]
+
+% ---- Custom Commands -----------------------------------------
+\newcommand{\bert}{\textsc{bert}}
+\newcommand{\cls}{\texttt{[CLS]}}
+\newcommand{\sep}{\texttt{[SEP]}}
+\newcommand{\mask}{\texttt{[MASK]}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\gelu}{\operatorname{GELU}}
+
+% ---- Bibliography --------------------------------------------
+\usepackage[
+  backend=biber,
+  style=ieee,
+  sorting=none
+]{biblatex}
+\addbibresource{references.bib}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+% ---- Title Page ----------------------------------------------
+\begin{titlepage}
+  \centering
+  % \includegraphics[width=0.22\textwidth]{figures/buet_logo.png}\par
+  \vspace{0.6cm}
+  {\scshape\large CSE 200 --- Technical Writing and Presentation\par}
+  \vspace{0.3cm}
+  {\scshape\Large Bangladesh University of Engineering and Technology\par}
+  {\scshape Department of Computer Science and Engineering\par}
+  \vspace{1.5cm}
+  \rule{\linewidth}{1.5pt}\par
+  \vspace{0.5cm}
+  {\Huge Inside \textsc{bert}\par}
+  \vspace{0.3cm}
+  {\large\itshape Architecture, Pre-training, and Fine-tuning\par}
+  \vspace{0.5cm}
+  \rule{\linewidth}{1.5pt}\par
+  \vfill
+  {\large March 2026\par}
+  \vspace{1.2cm}
+  \begin{tabular}{ll}
+    \textbf{Author}   & Your Name \\[4pt]
+    \textbf{Student ID} & XXXXXXX \\[4pt]
+    \textbf{Subsection} & A2 \\[4pt]
+    \textbf{Group}    & -- \\
+  \end{tabular}
+\end{titlepage}
+
+% ---- Abstract ------------------------------------------------
+\newpage
+\begin{abstractbox}
+\noindent\textbf{Abstract.}\quad
+Bidirectional Encoder Representations from Transformers (\bert{}) represents a
+paradigm shift in Natural Language Processing~(NLP). By leveraging deep
+bidirectional context within a Transformer encoder stack, \bert{} achieves
+state-of-the-art performance across a wide spectrum of language understanding
+tasks.  This report presents a comprehensive study of \bert{}, encompassing its
+architectural foundations, self-attention mechanisms, input representations,
+pre-training objectives, and fine-tuning strategies.  Theoretical insights are
+grounded in rigorous mathematical formulations, and practical implications are
+discussed in the context of downstream task adaptation.  The report further
+analyses \bert{}'s contributions relative to prior sequential models and outlines
+directions for future research in the field.
+\end{abstractbox}
+
+% ---- Table of Contents ---------------------------------------
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+
+% ---- Sections ------------------------------------------------
+\input{sections/introduction}
+\input{sections/architecture}
+\input{sections/attention}
+\input{sections/input_representation}
+\input{sections/pretraining}
+\input{sections/finetuning}
+\input{sections/discussion}
+
+\input{sections/part03.tex}
+
+% ---- Bibliography --------------------------------------------
+\newpage
+\printbibliography[heading=bibintoc, title={References}]
+
+\end{document}

@@ -1,0 +1,116 @@
+% ============================================================
+%  Section 5: Pre-training Strategy
+% ============================================================
+
+\section{Pre-training Strategy}
+\label{sec:pretraining}
+
+\bert{} is pre-trained via \emph{self-supervised learning} on large unlabelled
+corpora.  Two complementary objectives are optimised jointly, allowing the model to
+acquire both token-level and sentence-level linguistic understanding.
+
+\subsection{Masked Language Modelling (MLM)}
+\label{subsec:mlm}
+
+The MLM objective is the principal innovation that distinguishes \bert{} from
+left-to-right pre-training approaches.
+
+\paragraph{Procedure.}  At each training step, $15\%$ of the WordPiece tokens in
+an input sequence are selected uniformly at random.  Of these selected tokens:
+\begin{itemize}
+  \item $80\%$ are replaced by the special \mask{} token;
+  \item $10\%$ are replaced by a randomly sampled vocabulary token; and
+  \item $10\%$ are left unchanged.
+\end{itemize}
+The model is then trained to predict the \emph{original} token at each masked
+position using its final hidden state, producing the probability:
+\begin{equation}
+  P\!\left(w_i \mid \mathbf{x}_{\setminus i}\right)
+  = \softmax\!\left(\mathbf{W}_o\,\mathbf{h}_i^{(L)} + \mathbf{b}_o\right),
+  \label{eq:mlm}
+\end{equation}
+where $\mathbf{h}_i^{(L)}$ is the top-layer hidden state for position $i$,
+$\mathbf{W}_o \in \R^{|\mathcal{V}| \times d}$ is a learned output projection, and
+$|\mathcal{V}|$ is the vocabulary size.
+
+\paragraph{Significance.}  Because the hidden state for a masked token is computed
+from its \emph{full bilateral context}, the model is forced to integrate information
+from both directions simultaneously.  This is fundamentally different from
+autoregressive LMs, where causally masked attention prevents right-to-left
+information flow.
+
+\paragraph{Training signal quality.}  The 10\% random replacement and 10\%
+unchanged strategies are crucial: they prevent the model from learning that
+\mask{} always indicates a position to predict, while still providing the majority
+of gradient signal through masked positions.
+
+\begin{table}[H]
+  \centering
+  \caption{Masked Language Modelling (MLM) token treatment strategy. For each of
+           the 15\% selected tokens, the replacement is chosen probabilistically.}
+  \label{tab:mlm_strategy}
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Action} & \textbf{Proportion} & \textbf{Purpose} \\
+    \midrule
+    Replace with [MASK] & $80\%$ & Primary training signal \\
+    Replace with random token & $10\%$ & Encoder robustness \\
+    Keep unchanged & $10\%$ & Prevent [MASK] recognition \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Next Sentence Prediction (NSP)}
+\label{subsec:nsp}
+
+Many downstream tasks --- notably natural language inference, question answering,
+and reading comprehension --- require the model to reason about relationships
+\emph{between} sentences.  To pre-train this capability, \bert{} introduces an
+auxiliary binary classification task.
+
+\paragraph{Construction.}  For each training example, a sentence pair~$(A, B)$ is
+constructed as follows:
+\begin{itemize}
+  \item With probability $50\%$: $B$ is the sentence that actually follows $A$ in
+        the source corpus (\texttt{IsNext}).
+  \item With probability $50\%$: $B$ is a sentence sampled uniformly at random
+        from the corpus (\texttt{NotNext}).
+\end{itemize}
+The final hidden state of the \cls{} token is fed into a binary classifier to
+predict whether the pair is contiguous.
+
+\paragraph{Limitations.}  Subsequent work~\cite{liu2019roberta} demonstrated that
+the NSP objective provides limited benefit and can even hurt performance when the
+training data is already richly informative.  RoBERTa, a later variant, omits NSP
+entirely without degradation.
+
+\subsection{Pre-training Corpora}
+\label{subsec:data}
+
+\bert{} is pre-trained on two large English corpora:
+\begin{itemize}
+  \item \textbf{BooksCorpus}~\cite{zhu2015aligning}: approximately 800M words of
+        unpublished books, providing long contiguous passages essential for learning
+        inter-sentence relations.
+  \item \textbf{English Wikipedia}: approximately 2,500M words (text only;
+        lists, tables, and headers excluded), providing factual and encyclopaedic
+        knowledge.
+\end{itemize}
+In total, pre-training uses roughly 3.3B tokens and requires training for
+$1\,000\,000$ steps with a batch size of 256 sequences, amounting to approximately
+$4$ days on $64$ Cloud TPU v3 chips for \bert{}-Base.
+
+\subsection{Key Observations}
+\label{subsec:pretrain_obs}
+
+\begin{enumerate}
+  \item \textbf{Implicit linguistic supervision.}  No hand-labelled data is used;
+        supervision is derived entirely from the structure of natural language text.
+  \item \textbf{Bidirectionality.}  The MLM objective produces representations
+        that encode context from both directions, unlike GPT-style left-to-right
+        pre-training.
+  \item \textbf{High transferability.}  The resulting representations generalise
+        across tasks with orthogonal linguistic requirements, requiring only a
+        small task-specific fine-tuning head.
+\end{enumerate}

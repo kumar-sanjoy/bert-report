@@ -1,0 +1,73 @@
+% ============================================================
+%  Section 1: Introduction
+% ============================================================
+
+\section{Introduction}
+\label{sec:introduction}
+
+Natural Language Processing~(NLP) has undergone a profound transformation over the
+past decade, evolving from hand-crafted rule-based systems through statistical models
+to deeply learned neural representations.  Central to this progression has been the
+development of \emph{pre-trained language models} that transfer broad linguistic
+knowledge to specialised downstream tasks with minimal task-specific supervision.
+
+Among these advances, \bert{}~\cite{devlin2019bert} stands out as one of the most
+influential contributions to modern NLP.  Released by Devlin~et~al.\ at Google in
+2018, \bert{} introduced a fundamentally different paradigm by pre-training a deep
+\emph{bidirectional} Transformer encoder on massive unlabelled corpora and subsequently
+fine-tuning the resulting representations for a wide array of tasks.
+
+\subsection{Motivation and Context}
+
+Prior to \bert{}, the dominant pre-training strategies were inherently
+\emph{unidirectional}: models such as ELMo~\cite{peters2018deep} used
+shallow concatenations of independently trained left-to-right and right-to-left
+language models, while the Generative Pre-Training model~(GPT)~\cite{radford2018improving}
+trained a strictly left-to-right Transformer.  These designs imposed a critical
+limitation: each token's representation was conditioned only on tokens to its left
+(or only to its right), preventing the model from jointly exploiting both preceding
+and succeeding context.
+
+\bert{} resolves this limitation by employing a \emph{Masked Language Model}~(MLM)
+objective that randomly obscures a subset of input tokens and requires the model to
+predict them from their \emph{full} bilateral context.  This single design choice
+yields substantially richer contextual representations.
+
+\subsection{Limitations of Preceding Approaches}
+
+The three principal shortcomings addressed by \bert{} are summarised below.
+
+\begin{enumerate}
+  \item \textbf{Inability to capture long-range dependencies.}  Recurrent
+        architectures such as Long Short-Term Memory~(LSTM) networks suffer from
+        vanishing gradients, limiting their capacity to encode relationships between
+        tokens that are far apart in a sequence.
+
+  \item \textbf{Shallow contextual word embeddings.}  Static embedding methods
+        (e.g., Word2Vec, GloVe) assign a single fixed vector to each word type,
+        regardless of context.  Polysemous words such as \emph{bank} are therefore
+        represented identically in ``river bank'' and ``central bank.''
+
+  \item \textbf{Limited cross-task transferability.}  Prior models were commonly
+        re-trained from scratch for each new task, discarding knowledge that could
+        be shared across related problems.
+\end{enumerate}
+
+\subsection{Contributions of This Report}
+
+This report provides a self-contained technical exposition of \bert{}.  Specifically,
+it:
+\begin{itemize}
+  \item describes the Transformer encoder architecture and its hierarchical
+        representation learning capabilities~(\cref{sec:architecture});
+  \item derives and interprets the scaled dot-product self-attention
+        mechanism~(\cref{sec:attention});
+  \item details the token, segment, and positional embedding
+        scheme~(\cref{sec:input});
+  \item formalises the Masked Language Modelling and Next Sentence Prediction
+        pre-training objectives~(\cref{sec:pretraining});
+  \item outlines the fine-tuning procedure for representative downstream
+        tasks~(\cref{sec:finetuning}); and
+  \item critically evaluates \bert{}'s contributions, advantages, and
+        limitations~(\cref{sec:discussion}).
+\end{itemize}

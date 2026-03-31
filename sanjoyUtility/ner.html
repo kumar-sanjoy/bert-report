@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  /* --- Global Reset for Single Page, Zero-Whitespace --- */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  html, body { 
+    height: 100vh; /* Full viewport height */
+    width: 100vw;  /* Full viewport width */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7; 
+    display: flex;
+    justify-content: center; /* Horizontally center */
+    align-items: center;     /* Vertically center */
+    overflow: hidden;        /* Prevent scrollbars */
+  }
+
+  /* --- Main Container: Hugs the Content --- */
+  .diagram-container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    width: 860px; /* Matching width of Search Intent example */
+    height: fit-content;
+  }
+
+  /* Section Header */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* --- pipeline Stages Container --- */
+  .stages {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+
+  /* --- Base Panel Style (from BERT example) --- */
+  .panel {
+    background: #fff;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .panel-header {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: #f1efeb;
+    color: #5f5e5a;
+    border-bottom: 0.5px solid #d3d1c7;
+  }
+
+  .panel-body {
+    padding: 14px 16px;
+  }
+
+  /* --- specific Styles for pipeline Steps --- */
+  
+  /* STEP 1: Input Text */
+  .raw-input {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.5;
+    background: #fafafa;
+    border: 0.5px solid #eee;
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+
+  /* STEP 2: Highlighted Text */
+  .highlighted-text {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.6;
+  }
+
+  .entity-highlight {
+    background: #e1f5fe; /* Light blue highlight */
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  /* STEP 3: Classification Badges */
+  .classification-flow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .classification-box {
+    flex: 1;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  .entity-name { font-weight: bold; color: #333; margin-bottom: 4px; display: block; }
+  .arrow-symbol { font-size: 16px; color: #999; margin: 4px 0; display: block; }
+
+  /* Classification Color Badges */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .badge-person   { background-color: #388e3c; } /* Green */
+  .badge-country  { background-color: #1976d2; } /* Blue */
+  .badge-city     { background-color: #ef6c00; } /* Orange */
+
+  /* STEP 4: Structured Table */
+  .ner-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .ner-table th, .ner-table td {
+    border: 1px solid #eee;
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .ner-table th {
+    background-color: #f7f7f9;
+    font-weight: 600;
+    color: #666;
+  }
+
+  .ner-table tr:last-child td { border-bottom: 0; }
+
+  /* Connective Arrows between panels */
+  .flow-arrow {
+    text-align: center;
+    color: #ccc;
+    font-size: 18px;
+    margin: -10px 0;
+  }
+
+  /* --- Print (PDF) Configuration: Forces single page, exact colors --- */
+  @media print {
+    @page {
+      margin: 0;
+      size: auto; /* Shrink-wraps the diagram-container */
+    }
+    html, body { 
+      background: white; 
+      height: fit-content; 
+      width: fit-content; 
+      overflow: visible; 
+    }
+    .diagram-container {
+      box-shadow: none;
+      border: none;
+      margin: 0;
+      padding: 30px;
+    }
+    /* Forces Background colors to show in PDF */
+    * { 
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="diagram-container">
+  
+  <!-- <p class="section-label">Named Entity Recognition (NER) Pipeline</p> -->
+
+  <div class="stages">
+
+    <div class="panel">
+      <div class="panel-header">1. Raw Input String</div>
+      <div class="panel-body">
+        <p class="raw-input">"Barack Obama, the 44th President of USA, was born in Honolulu, Hawaii."</p>
+      </div>
+    </div>
+
+    <div class="flow-arrow">⬇</div>
+
+    <div class="panel">
+      <div class="panel-header">2. Contextual Candidate Detection (BERT)</div>
+      <div class="panel-bodyHighlighted">
+        <p class="highlighted-text">
+          <span class="entity-highlight">Barack Obama</span>, the 44th President of <span class="entity-highlight">USA</span>, was born in <span class="entity-highlight">Honolulu</span>, <span class="entity-highlight">Hawaii</span>.
+        </p>
+      </div>
+    </div>
+
+    <div class="flow-arrow">⬇</div>
+
+    <div class="panel">
+      <div class="panel-header">3. Entity Classification (Softmax Layer)</div>
+      <div class="panel-body">
+        <div class="classification-flow">
+          <div class="classification-box">
+            <span class="entity-name">Barack Obama</span>
+            <span class="arrow-symbol">→</span>
+            <span class="badge badge-person">PERSON</span>
+          </div>
+          <div class="classification-box">
+            <span class="entity-name">USA</span>
+            <span class="arrow-symbol">→</span>
+            <span class="badge badge-country">COUNTRY / GPE</span>
+          </div>
+          <div class="classification-box">
+            <span class="entity-name">Honolulu, Hawaii</span>
+            <span class="arrow-symbol">→</span>
+            <span class="badge badge-city">CITY / LOCATION</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">⬇</div>
+
+    <div class="panel">
+      <div class="panel-header">4. Structured Output Table</div>
+      <div class="panel-body" style="padding: 0;"> <table class="ner-table">
+          <thead>
+            <tr>
+              <th>Entity Text</th>
+              <th>Category</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Barack Obama</td>
+              <td><span class="badge badge-person">PERSON</span></td>
+              <td>0.998</td>
+            </tr>
+            <tr>
+              <td>USA</td>
+              <td><span class="badge badge-country">COUNTRY/GPE</span></td>
+              <td>0.991</td>
+            </tr>
+            <tr>
+              <td>Honolulu</td>
+              <td><span class="badge badge-city">LOCATION</span></td>
+              <td>0.985</td>
+            </tr>
+            <tr>
+              <td>Hawaii</td>
+              <td><span class="badge badge-city">LOCATION</span></td>
+              <td>0.989</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

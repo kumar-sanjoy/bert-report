@@ -1,0 +1,122 @@
+% ============================================================
+%  Section 7: Discussion and Impact
+% ============================================================
+
+\section{Discussion and Impact}
+\label{sec:discussion}
+
+\subsection{Key Contributions}
+\label{subsec:contributions}
+
+\bert{} introduced three innovations that, taken together, established a new paradigm
+for NLP research and engineering:
+
+\begin{enumerate}
+  \item \textbf{Deep bidirectional pre-training.}  By employing the MLM objective,
+        \bert{} learns representations that incorporate context from both directions
+        simultaneously in every layer.  This is a departure from the shallow
+        bidirectionality of ELMo (which concatenates unidirectional LMs) and from
+        the strict left-to-right conditioning of GPT.
+
+  \item \textbf{Unified pre-train–fine-tune framework.}  A single model can be
+        adapted to diverse tasks --- classification, question answering, sequence
+        labelling, semantic similarity --- with minimal architectural change,
+        reducing the need for highly specialised task-specific designs.
+
+  \item \textbf{State-of-the-art empirical results.}  Upon publication, \bert{}
+        achieved new records on 11 NLP benchmarks, including a 7.7-point
+        improvement on the GLUE benchmark~\cite{wang2018glue} and a 1.5 F1-point
+        gain on SQuAD~v1.1~\cite{rajpurkar2016squad}.
+\end{enumerate}
+
+\subsection{Advantages}
+\label{subsec:advantages}
+
+\begin{itemize}
+  \item \textbf{Strong transfer learning.}  Pre-trained \bert{} representations
+        encode broad linguistic knowledge that transfers well to low-resource tasks
+        where labelled data is scarce.
+
+  \item \textbf{Task flexibility.}  The same encoder is applicable to sentence-level
+        and token-level tasks without structural modification.
+
+  \item \textbf{Contextual disambiguation.}  Because each token's representation
+        is a function of all other tokens in the sequence, polysemous words are
+        disambiguated naturally --- a capability absent from static embeddings.
+\end{itemize}
+
+\subsection{Limitations}
+\label{subsec:limitations}
+
+Despite its impact, \bert{} carries several notable limitations:
+
+\begin{itemize}
+  \item \textbf{Computational cost.}  Pre-training \bert{}-Large requires thousands
+        of TPU hours and is prohibitively expensive for most academic and industrial
+        teams without specialised hardware.  Inference latency is also high relative
+        to simpler models, hampering deployment in latency-sensitive applications.
+
+  \item \textbf{Fixed input length.}  The 512-token limit imposed by learned
+        position embeddings makes \bert{} unsuitable for long documents without
+        chunking heuristics.
+
+  \item \textbf{NSP objective limitations.}  The NSP task does not require
+        fine-grained linguistic understanding and can be learned by superficial
+        topic-matching heuristics~\cite{liu2019roberta}.
+
+  \item \textbf{Masked token proportion.}  Only 15\% of tokens are masked per
+        step, yielding a sparse training signal relative to autoregressive models
+        that compute loss over all tokens.
+
+  \item \textbf{Discrepancy between pre-training and fine-tuning.}  The \mask{}
+        token appears during pre-training but never during fine-tuning, creating a
+        distribution mismatch that may degrade performance.
+\end{itemize}
+
+\subsection{Influence and Subsequent Work}
+\label{subsec:subsequent}
+
+\bert{}'s design has spawned a rich ecosystem of variants and successors, including:
+\begin{table}[H]
+  \centering
+  \caption{\bert{} and contemporary models: a comparison of key properties.
+           All models use the Transformer encoder architecture; differences lie in
+           pre-training objectives, corpus size, and downstream performance.}
+  \label{tab:model_comparison}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{lcccc}
+    \toprule
+    \textbf{Model} & \textbf{Type} & \textbf{Bidirectional} & \textbf{GLUE Score} & \textbf{Year} \\
+    \midrule
+    ELMo & Feature-based & Shallow & 76.2 & 2018 \\
+    \bert{}-Base & Pre-train/Fine-tune & Yes (MLM) & 78.3 & 2018 \\
+    GPT & Pre-train/Fine-tune & No (causal) & 72.3 & 2018 \\
+    RoBERTa & Pre-train/Fine-tune & Yes (dynamic MLM) & 80.5 & 2019 \\
+    ALBERT & Pre-train/Fine-tune & Yes (param. sharing) & 75.3 & 2019 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\begin{itemize}
+  \item \textbf{RoBERTa}~\cite{liu2019roberta}: removes NSP, trains with dynamic
+        masking and larger batches, and demonstrates that pre-training for longer
+        substantially improves performance.
+  \item \textbf{ALBERT}~\cite{lan2019albert}: introduces parameter sharing across
+        layers and factorised embedding parameterisation to reduce model size.
+  \item \textbf{DistilBERT}~\cite{sanh2019distilbert}: uses knowledge distillation
+        to produce a 40\%-smaller, 60\%-faster model retaining 97\% of \bert{}'s
+        GLUE score.
+  \item \textbf{Domain-specific BERTs}: BioBERT, SciBERT, ClinicalBERT, and others
+        apply the same pre-training procedure to specialised corpora, demonstrating
+        the generality of the framework.
+\end{itemize}
+
+\subsection{Conclusion}
+\label{subsec:conclusion}
+
+\bert{} marks a watershed moment in the evolution of NLP.  Its introduction of
+deep bidirectional pre-training via masked language modelling demonstrated
+conclusively that a single general-purpose encoder, pre-trained at scale, can
+outperform highly engineered task-specific architectures across the full spectrum
+of language understanding tasks.  The architectural and training insights embedded
+in \bert{} continue to underpin state-of-the-art large language models, and its
+influence on the field remains profound.

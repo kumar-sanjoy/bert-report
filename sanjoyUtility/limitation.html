@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { 
+  height: 100vh;
+  width: 100vw;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #fdfdfd; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.figure-container {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  width: 900px;
+}
+
+.figure-main-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 25px;
+  text-align: center;
+  border-bottom: 0.5px solid #eee;
+  padding-bottom: 15px;
+}
+
+.limitations-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.limit-card {
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon { font-size: 16px; }
+
+.card-body {
+  padding: 14px;
+  font-size: 12.5px;
+  color: #333;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* Styles */
+
+.limit-card.context { border: 0.5px solid #b5d4f4; background: #e6f1fb; }
+.limit-card.context .card-header { background: #b5d4f4; color: #0c447c; }
+
+.limit-card.encoder { border: 0.5px solid #ddd6fe; background: #f5f3ff; }
+.limit-card.encoder .card-header { background: #ddd6fe; color: #5b21b6; }
+
+.limit-card.cost { border: 0.5px solid #fed7aa; background: #fffaf5; }
+.limit-card.cost .card-header { background: #fed7aa; color: #9a3412; }
+
+.limit-card.reasoning { border: 0.5px solid #fecaca; background: #fff5f5; }
+.limit-card.reasoning .card-header { background: #fecaca; color: #991b1b; }
+
+.limit-card.bias { border: 0.5px solid #d1d5db; background: #f9fafb; }
+.limit-card.bias .card-header { background: #d1d5db; color: #1f2937; }
+
+.limit-card.bias .card-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bias-warning-icon {
+  font-size: 28px;
+  color: #777;
+}
+
+/* NEW: Fine-tuning limitation */
+.limit-card.finetune {
+  border: 0.5px solid #bbf7d0;
+  background: #f0fdf4;
+}
+.limit-card.finetune .card-header {
+  background: #bbf7d0;
+  color: #065f46;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="figure-container">
+  
+
+  <div class="limitations-grid">
+
+    <!-- Row 1 -->
+    <div class="limit-card context">
+      <div class="card-header"><span class="icon">↹</span> FIXED CONTEXT</div>
+      <div class="card-body">
+        Max 512 tokens<br>
+        Long context lost
+      </div>
+    </div>
+
+    <div class="limit-card encoder">
+      <div class="card-header"><span class="icon">⬇⬇</span> ENCODER-ONLY</div>
+      <div class="card-body">
+        No autoregressive gen<br>
+        Not for text creation
+      </div>
+    </div>
+
+    <div class="limit-card cost">
+      <div class="card-header"><span class="icon">⚡</span> HIGH COST</div>
+      <div class="card-body">
+        Heavy compute<br>
+        110M–340M params
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="limit-card reasoning">
+      <div class="card-header"><span class="icon">❓</span> WEAK REASONING</div>
+      <div class="card-body">
+        Pattern-based only<br>
+        Poor multi-step logic
+      </div>
+    </div>
+
+    <div class="limit-card bias">
+      <div class="card-header"><span class="icon">⚠</span> DATA BIAS</div>
+      <div class="card-body">
+        <span class="bias-warning-icon">⚖</span>
+        Learns & amplifies<br>
+        dataset bias
+      </div>
+    </div>
+
+    <div class="limit-card finetune">
+      <div class="card-header"><span class="icon">🛠</span> TASK-SPECIFIC</div>
+      <div class="card-body">
+        Needs fine-tuning<br>
+        Not plug-and-play
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

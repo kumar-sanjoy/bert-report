@@ -1,0 +1,88 @@
+# =========================
+
+# LaTeX build artifacts
+
+# =========================
+
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.out
+*.toc
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+*.xdv
+
+# =========================
+
+# Latexmk / arara
+
+# =========================
+
+latexmkrc
+.arara/
+
+# =========================
+
+# Bibliography helpers
+
+# =========================
+
+*.run.xml
+
+# =========================
+
+# Output files (optional)
+
+# =========================
+
+# Uncomment if you DON'T want PDFs tracked
+
+# *.pdf
+
+# =========================
+
+# Editors / OS junk
+
+# =========================
+
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# VS Code
+
+.vscode/
+
+# Mac
+
+*.icloud
+
+# =========================
+
+# Temporary folders
+
+# =========================
+
+build/
+out/
+dist/
