@@ -1,0 +1,70 @@
+% =============================================================================
+\section{Introduction to \bert{}}
+\label{sec:intro_bert}
+% =============================================================================
+
+\subsection{From Transformer to \bert{}}
+
+The Transformer's encoder already attends bidirectionally: in each
+self-attention head, every token can query every other token regardless of
+direction. However, the original Transformer was designed as an encoder--decoder
+for sequence-to-sequence tasks. \textbf{\bert{}}~\cite{devlin2019bert} (Devlin
+et al., 2018) makes a deliberate choice: \emph{keep only the encoder stack} and
+pre-train it for language understanding rather than generation.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{comparison.png}
+  \caption{Architectural comparison. The original Transformer uses both
+    encoder and decoder for translation. \bert{} retains only the encoder stack,
+    using the \cls{} token representation as input to task-specific classifier
+    heads.}
+  \label{fig:bert_vs_transformer}
+\end{figure}
+
+Table~\ref{tab:transformer_vs_bert} contrasts the two architectures.
+
+\begin{table}[H]
+\centering
+\caption{Original Transformer vs.\ \bert{}.}
+\label{tab:transformer_vs_bert}
+\begin{tabularx}{0.92\textwidth}{lXX}
+  \toprule
+  \textbf{Aspect}
+    & \textbf{Original Transformer}~\cite{vaswani2017attention}
+    & \textbf{\bert{}}~\cite{devlin2019bert} \\
+  \midrule
+  Architecture
+    & Encoder + Decoder
+    & Encoder only ($N$ stacked layers) \\
+  Primary task
+    & Sequence-to-sequence (translation)
+    & Representation learning / understanding \\
+  Context
+    & Decoder is left-to-right (masked)
+    & Fully bidirectional at every layer \\
+  Pre-training
+    & None (direct supervision)
+    & Masked LM + Next Sentence Prediction \\
+  Usage
+    & Train end-to-end per task
+    & Pre-train once, fine-tune per task \\
+  \bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{remark}
+  \textit{``The Transformer learns to \textbf{translate}. \bert{} learns to
+  \textbf{understand}.''}
+\end{remark}
+
+\subsection{What Makes \bert{} Truly Bidirectional?}
+
+This is a subtle but crucial point. ELMo~\cite{peters2018elmo} was also called
+``bidirectional,'' but its forward and backward LSTMs were trained with separate
+language model objectives and then concatenated. \bert{}, by contrast, uses a
+\emph{single unified} Transformer encoder in which every attention head
+simultaneously sees all tokens from both directions, and every layer integrates
+left and right context jointly. This \emph{deep} bidirectionality --- as opposed
+to shallow concatenation --- is what makes \bert{}'s representations
+qualitatively different.

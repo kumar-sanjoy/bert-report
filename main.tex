@@ -27,10 +27,12 @@
 
 % ---- Graphics & Figures --------------------------------------
 \usepackage{graphicx}
+\graphicspath{{figures/}}
 \usepackage{float}
 \usepackage{subcaption}
 \usepackage[labelfont=bf, font=small, justification=centering]{caption}
 \usepackage{tikz}
+\usetikzlibrary{arrows.meta}
 
 % ---- Tables --------------------------------------------------
 \usepackage{booktabs}
@@ -181,6 +183,12 @@ directions for future research in the field.
 
 % ---- Sections ------------------------------------------------
 \input{sections/introduction}
+\input{sections/motivation.tex}
+\input{sections/sequential_models.tex}
+\input{sections/transformer.tex}
+\input{sections/intro_to_bert.tex}
+\input{sections/turning_point.tex}
+\input{sections/arch.tex}
 \input{sections/architecture}
 \input{sections/attention}
 \input{sections/input_representation}

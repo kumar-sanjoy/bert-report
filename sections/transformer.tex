@@ -1,0 +1,148 @@
+% =============================================================================
+\section{The Transformer Architecture}
+\label{sec:transformer}
+% =============================================================================
+
+\subsection{Motivation and Core Idea}
+
+Both LSTM variants process text token by token. The root cause of their
+limitations is the sequential recurrence: dependency on the previous hidden
+state forces one-at-a-time computation and creates an information bottleneck for
+long-range dependencies.
+
+The \textbf{Transformer}~\cite{vaswani2017attention} (Vaswani et al., 2017)
+discards recurrence entirely. Its central mechanism is \textbf{self-attention}:
+every token directly attends to every other token in the sequence
+\emph{simultaneously}, computing a weighted combination of all position
+representations in a single operation.
+
+\subsection{Self-Attention Mechanism}
+\label{subsec:selfattn}
+
+Given an input sequence of $n$ tokens represented as a matrix
+$X \in \R^{n \times d_{\text{model}}}$, three linear projections produce query,
+key, and value matrices:
+\begin{equation}
+  Q = X W^Q, \quad K = X W^K, \quad V = X W^V
+  \label{eq:qkv}
+\end{equation}
+where $W^Q, W^K, W^V \in \R^{d_{\text{model}} \times d_k}$.
+The \textbf{scaled dot-product attention} output is:
+\begin{equation}
+  \text{Attention}(Q, K, V)
+    = \softmax\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V
+  \label{eq:attention}
+\end{equation}
+
+The scaling factor $1/\sqrt{d_k}$ prevents the dot products from growing large
+in magnitude, which would push the softmax into regions of extremely small
+gradients. Each output row is a weighted sum of all value vectors, where the
+weights reflect how relevant each token is to the current query position.
+
+\subsection{Multi-Head Attention}
+
+Rather than performing a single attention operation, the Transformer applies $h$
+\emph{parallel} attention heads, each learning a different projection:
+\begin{equation}
+  \text{MultiHead}(Q,K,V)
+    = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)\, W^O
+  \label{eq:multihead}
+\end{equation}
+where $\text{head}_i = \text{Attention}(QW_i^Q,\, KW_i^K,\, VW_i^V)$ and
+$W^O \in \R^{hd_k \times d_{\text{model}}}$. Multiple heads allow the model
+to capture different types of relationships simultaneously --- \textit{e.g.}\
+syntactic agreement, coreference, and semantic similarity --- from the same
+input.
+
+% ── Self-attention illustration ───────────────────────────────────────────────
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Stealth, scale=1.02, transform shape]
+  \def\words{{"The","animal","didn't","cross","the","street","because","it"}}
+  \foreach \i in {0,...,7}{
+    \pgfmathsetmacro{\lbl}{\words[\i]}
+    \node[draw=NavyBlue!85, fill=NavyBlue!20, rounded corners=3pt,
+          minimum width=1.25cm, minimum height=0.68cm,
+          font=\footnotesize\bfseries, align=center, text=black]
+          (tok\i) at ({-5.4 + \i*1.55}, 0) {\lbl};
+  }
+  \foreach \i in {0,1,2,3,4,5,6}{
+    \pgfmathsetmacro{\opac}{0.18 + \i*0.08}
+    \draw[cyan!65!blue, opacity=\opac, line width={\opac*6pt}]
+      (tok7.south) .. controls +(0,-0.9) and +(0,-0.9) .. (tok\i.south);
+  }
+  \draw[red!80!black, very thick, line width=2.8pt]
+    (tok7.south) .. controls +(0,-1.35) and +(0,-1.35) .. (tok1.south);
+  \node[font=\normalsize\bfseries, text=red!80!black] at (-1.0,-1.65)
+    {highest attention: ``it'' $\rightarrow$ ``animal''};
+  \node[font=\small, text=black!85, align=center] at (0,-2.45)
+    {Each token attends to \emph{all} others simultaneously (in parallel).
+     Long-range links resolved in one step.};
+\end{tikzpicture}
+\caption{Self-attention in action. The pronoun \textit{``it''} attends most
+  strongly to \textit{``animal''}, resolving the coreference in a single layer
+  without traversing a chain of timesteps. Thicker arcs indicate higher
+  attention weights.}
+\label{fig:selfattn}
+\end{figure}
+
+\subsection{Positional Encoding}
+
+Since self-attention is permutation-invariant (Eq.~\ref{eq:attention} has no
+notion of token order), the Transformer injects \textbf{positional
+encodings}~\cite{vaswani2017attention} into the input embeddings:
+\begin{equation}
+  \text{PE}_{(pos,\,2i)}   = \sin\!\left(\frac{pos}{10000^{2i/d}}\right),
+  \qquad
+  \text{PE}_{(pos,\,2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d}}\right)
+  \label{eq:posenc}
+\end{equation}
+These fixed sinusoidal functions encode absolute position and allow the model to
+represent relative distances between tokens.
+
+\subsection{Encoder and Decoder Stacks}
+
+The original Transformer~\cite{vaswani2017attention} is an encoder--decoder
+model. Each encoder layer consists of (i)~multi-head self-attention and
+(ii)~a position-wise feed-forward network (FFN), each sublayer wrapped with a
+residual connection and Layer Normalisation. The decoder additionally contains
+a \emph{cross-attention} sublayer that queries the encoder output.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{og_transformer.png}
+  \caption{The original Transformer architecture~\cite{vaswani2017attention}.
+    The encoder (left) produces contextual embeddings from the source sequence.
+    The decoder (right) generates the target sequence auto-regressively, using
+    masked self-attention and cross-attention over the encoder output.}
+  \label{fig:transformer}
+\end{figure}
+
+\subsection{Why the Transformer Surpasses the LSTM}
+
+Table~\ref{tab:lstm_vs_transformer} summarises the key differences between the
+two architectures.
+
+\begin{table}[H]
+\centering
+\caption{LSTM vs.\ Transformer: a direct comparison.}
+\label{tab:lstm_vs_transformer}
+\begin{tabularx}{0.92\textwidth}{lXX}
+  \toprule
+  \textbf{Property} & \textbf{LSTM / BiLSTM} & \textbf{Transformer} \\
+  \midrule
+  Parallelism
+    & Sequential; one step per token
+    & Fully parallel over all tokens \\
+  Long-range dependencies
+    & Degrade with distance
+    & Constant path length between any two positions \\
+  Bidirectionality
+    & Separate forward/backward passes
+    & Joint left+right context within every attention layer \\
+  Scalability
+    & Hard to scale to very long sequences
+    & Scales with hardware via parallelism \\
+  \bottomrule
+\end{tabularx}
+\end{table}

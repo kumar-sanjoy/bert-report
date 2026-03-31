@@ -1,0 +1,66 @@
+% =============================================================================
+\section{Motivation: The Limits of Static Word Embeddings}
+\label{sec:static}
+% =============================================================================
+
+\subsection{What Are Word Embeddings?}
+
+The first major breakthrough beyond symbolic NLP was the introduction of
+\emph{distributed word representations}, or \emph{word embeddings}: mappings
+from vocabulary items to dense vectors in a continuous $d$-dimensional space
+$\R^d$.
+
+The foundational idea is the \textbf{distributional hypothesis}~\cite{harris1954distributional}:
+words that occur in similar contexts tend to carry similar meanings. Models such
+as Word2Vec~\cite{mikolov2013word2vec}, GloVe~\cite{pennington2014glove}, and
+FastText~\cite{bojanowski2017fasttext} operationalise this by training on large
+text corpora to produce an embedding matrix $\mathbf{E} \in \R^{|V| \times d}$,
+where each row $\mathbf{e}_w$ is the embedding of word $w$.
+
+\textbf{Word2Vec}~\cite{mikolov2013word2vec} (Google, 2013) trains a shallow
+neural network with either a Skip-gram or CBOW (Continuous Bag-of-Words)
+objective to predict a word from its context or vice versa.
+\textbf{GloVe}~\cite{pennington2014glove} (Stanford, 2014) learns embeddings
+from the global word co-occurrence matrix.
+\textbf{FastText}~\cite{bojanowski2017fasttext} (Facebook, 2016) extends
+Word2Vec to subword units, improving handling of morphologically rich languages
+and out-of-vocabulary words.
+
+\begin{table}[H]
+\centering
+\caption{Summary of static word embedding models.}
+\label{tab:static}
+\begin{tabularx}{0.92\textwidth}{>{\bfseries}lllX}
+  \toprule
+  Model & Origin & Year & Key Innovation \\
+  \midrule
+  Word2Vec~\cite{mikolov2013word2vec}    & Google   & 2013
+    & Skip-gram / CBOW objectives; scalable training \\
+  GloVe~\cite{pennington2014glove}       & Stanford & 2014
+    & Global co-occurrence matrix factorisation \\
+  FastText~\cite{bojanowski2017fasttext} & Facebook & 2016
+    & Subword $n$-gram representations \\
+  \bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent
+These models yield rich geometric properties. The famous analogy
+$\vec{\text{king}} - \vec{\text{man}} + \vec{\text{woman}} \approx
+\vec{\text{queen}}$ emerges naturally from the learned space, illustrating that
+semantic and syntactic relationships are captured as linear offsets in the
+embedding space.
+
+\subsection{The Fatal Flaw: Context-Blindness}
+
+Despite their utility, static embeddings have one fundamental limitation:
+\textbf{every occurrence of a word receives the same vector}, regardless of the
+sentence it appears in. Formally, the mapping $f\colon w \mapsto \mathbf{e}_w$
+is a simple lookup --- context plays no role.
+
+For the polysemy example above, both occurrences of \textit{bank} map to an
+identical vector $\mathbf{e}_{\text{bank}} \in \R^d$. The embedding must
+somehow encode both the financial-institution sense and the geographical sense
+simultaneously, which it cannot do faithfully. This context-blindness makes
+static embeddings inadequate for tasks that require genuine language
+understanding.

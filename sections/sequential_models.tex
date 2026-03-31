@@ -1,0 +1,225 @@
+% =============================================================================
+\section{Sequential Models: LSTM and BiLSTM}
+\label{sec:lstm}
+% =============================================================================
+
+\subsection{Recurrent Neural Networks}
+
+To incorporate context into word representations, researchers turned to
+\textbf{Recurrent Neural Networks (RNNs)}, which process a sequence of tokens
+$x_1, x_2, \ldots, x_T$ one step at a time, maintaining a hidden state $h_t$
+that accumulates information from previous tokens:
+\begin{equation}
+  h_t = f_\theta(h_{t-1},\, x_t)
+\end{equation}
+where $f_\theta$ is a learned function. In principle, $h_T$ encodes the entire
+history of the sequence. In practice, simple RNNs suffer from
+\emph{vanishing gradients}~\cite{bengio1994learning}: gradients shrink
+exponentially as they are back-propagated through many timesteps, making it
+impossible to learn long-range dependencies.
+
+\subsection{Long Short-Term Memory (LSTM)}
+\label{subsec:lstm}
+
+The \textbf{Long Short-Term Memory} (LSTM)~\cite{hochreiter1997lstm}
+(Hochreiter \& Schmidhuber, 1997) addresses the vanishing gradient problem by
+introducing a \emph{cell state} $c_t$ alongside the hidden state, regulated by
+three learned gates: the \emph{forget gate} $f_t$, the \emph{input gate} $i_t$,
+and the \emph{output gate} $o_t$. The full update equations are:
+
+\begin{align}
+  f_t          &= \sigma(W_f [h_{t-1}, x_t] + b_f)             \label{eq:forget}    \\
+  i_t          &= \sigma(W_i [h_{t-1}, x_t] + b_i)             \label{eq:inputgate} \\
+  \tilde{c}_t  &= \tanh(W_c [h_{t-1}, x_t] + b_c)              \label{eq:candidate} \\
+  c_t          &= f_t \odot c_{t-1} + i_t \odot \tilde{c}_t    \label{eq:cell}      \\
+  o_t          &= \sigma(W_o [h_{t-1}, x_t] + b_o)             \label{eq:outgate}   \\
+  h_t          &= o_t \odot \tanh(c_t)                          \label{eq:hidden}
+\end{align}
+
+\noindent
+where $\sigma$ is the sigmoid function, $\odot$ denotes element-wise
+multiplication, and $[h_{t-1}, x_t]$ denotes concatenation.
+
+The cell state $c_t$ (Eq.~\ref{eq:cell}) acts as a \emph{memory conveyor belt}:
+the forget gate decides what to discard from the previous state, and the input
+gate controls what new information to write. This mechanism allows gradients to
+flow across hundreds of timesteps, resolving the vanishing gradient problem that
+plagued simple RNNs.
+
+% ── LSTM encoder–decoder diagram ──────────────────────────────────────────────
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  >=Stealth, thick,
+  enc/.style={draw=green!65!black, fill=green!10, rounded corners=4pt,
+              minimum width=0.85cm, minimum height=2.2cm, line width=1.2pt},
+  dec/.style={draw=blue!75!black, fill=cyan!10, rounded corners=4pt,
+              minimum width=0.85cm, minimum height=2.2cm, line width=1.5pt},
+  emb/.style={draw=green!65!black, fill=yellow!12, rounded corners=3pt,
+              minimum width=2.0cm, minimum height=0.55cm},
+  rdot/.style={circle, fill=red!80, minimum size=5pt, inner sep=0pt},
+  bdot/.style={circle, fill=blue!75, minimum size=5pt, inner sep=0pt},
+  rarr/.style={-{Stealth[length=5pt,width=4pt]}, thick, red!80},
+  barr/.style={-{Stealth[length=5pt,width=4pt]}, thick, blue!75},
+  scale=0.82, transform shape
+]
+
+%% Language labels
+\node[font=\small\bfseries, text=green!60!black] at (2.8,2.8)  {English (Encoder)};
+\node[font=\small\bfseries, text=blue!70!black]  at (8.2,2.8)  {French (Decoder)};
+
+%% Encoder cells
+\foreach \x/\lab/\nm in {0.0/$h_1$/h1, 2.6/$h_2$/h2, 5.2/$h_3$/h3}{
+  \node[enc](\nm) at (\x,0.2){};
+  \foreach \y in {0.9, 0.45, 0.0, -0.45}{\node[rdot] at (\x,\y){};}
+  \node[font=\small\itshape] at (\x,1.55) {\lab};
+}
+\draw[rarr] (-1.1,0.2) -- (h1.west);
+\draw[rarr] (h1.east) -- (h2.west) node[midway,above,font=\scriptsize\itshape]{W};
+\draw[rarr] (h2.east) -- (h3.west) node[midway,above,font=\scriptsize\itshape]{W};
+
+%% Input embeddings
+\foreach \xc/\lbl/\word in {0.0/$x_1$/I, 2.6/$x_2$/am, 5.2/$x_3$/happy}{
+  \node[emb](xe\word) at (\xc,-1.7){};
+  \foreach \dx in {-0.6,-0.3,0,0.3,0.6}{\node[rdot] at (\xc+\dx,-1.7){};}
+  \node[font=\scriptsize\itshape] at (\xc-0.8,-1.25) {\lbl};
+  \node[font=\small] at (\xc,-2.35) {\word};
+  \draw[rarr] (xe\word.north) -- ++(0,0.45);
+}
+\draw[rarr] (xeI.north)++(0,0.45) -- (h1.south);
+\draw[rarr] (xeam.north)++(0,0.45) -- (h2.south);
+\draw[rarr] (xehappy.north)++(0,0.45) -- (h3.south);
+
+%% Decoder cells
+\node[dec](d1) at (7.2,0.2){};
+\foreach \y in {0.9,0.45,0.0,-0.45}{\node[bdot] at (7.2,\y){};}
+\node[dec](d2) at (9.0,0.2){};
+\foreach \y in {0.9,0.45,0.0,-0.45}{\node[bdot] at (9.0,\y){};}
+\node[font=\small\itshape, text=blue!70!black] at (7.2,-1.1) {$y_1$};
+\node[font=\small\itshape, text=blue!70!black] at (9.0,-1.1) {$y_2$};
+\node[font=\small\bfseries, text=blue!75!black] at (7.2,2.1) {Je};
+\node[font=\small\bfseries, text=blue!75!black] at (9.0,2.1) {suis};
+\draw[barr] (h3.east) -- ++(0.55,0) |- (d1.west);
+\draw[barr] (d1.east) -- (d2.west);
+\draw[barr] (d1.north) -- ++(0,0.5);
+\draw[barr] (d2.north) -- ++(0,0.5);
+
+%% Timestep annotations
+\foreach \x/\t in {0.0/1, 2.6/2, 5.2/3}{
+  \node[font=\normalsize\bfseries, text=teal!80!black] at (\x,-3.0) {$t=\t$};
+}
+\end{tikzpicture}
+\caption{LSTM encoder--decoder for sequence-to-sequence translation
+  (\textit{``I am happy''} $\to$ \textit{``Je suis \ldots''}). The encoder
+  processes tokens sequentially, passing hidden state $h_t$ forward; the
+  decoder generates the target sequence conditioned on the final encoder state.}
+\label{fig:lstm}
+\end{figure}
+
+\subsection{Limitations of the LSTM}
+
+While the LSTM addresses the vanishing gradient problem, it has three remaining
+weaknesses that limit its effectiveness for language understanding:
+
+\begin{description}[leftmargin=2em, style=nextline]
+  \item[\textbf{1.~Sequential bottleneck.}]
+    The recurrence $h_t = f(h_{t-1}, x_t)$ is inherently sequential: token $t$
+    cannot be processed until token $t{-}1$ is complete. This prevents
+    parallelisation along the time axis, making training slow on long sequences.
+
+  \item[\textbf{2.~Memory degradation.}]
+    Despite the gating mechanism, information from early tokens is progressively
+    diluted over many timesteps. For a sequence of length $T$, the influence of
+    $x_1$ on $h_T$ decays roughly as $\prod_{t=2}^{T} f_t$ --- a product of
+    forget gate values all $\leq 1$.
+
+  \item[\textbf{3.~Unidirectionality.}]
+    A left-to-right LSTM builds the representation of token $t$ from only its
+    left context $x_1, \ldots, x_{t-1}$. The right context --- which is often
+    crucial for disambiguation --- is unavailable.
+\end{description}
+
+\subsection{Bidirectional LSTM (BiLSTM)}
+\label{subsec:bilstm}
+
+The \textbf{Bidirectional LSTM}~\cite{schuster1997bilstm} (BiLSTM) attempts to
+address the unidirectionality problem by running two separate LSTM passes over
+the input --- a forward pass (left-to-right) producing $\overrightarrow{h_t}$
+and a backward pass (right-to-left) producing $\overleftarrow{h_t}$ --- and
+concatenating their outputs:
+\begin{equation}
+  h_t = \left[\overrightarrow{h_t}\,;\,\overleftarrow{h_t}\right]
+  \label{eq:bilstm}
+\end{equation}
+
+% ── BiLSTM diagram ────────────────────────────────────────────────────────────
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  >=Stealth, x=1.6cm, y=1.2cm,
+  xnode/.style={circle, draw=blue!70!black, fill=cyan!18,
+                minimum size=8mm, inner sep=0pt, font=\small},
+  ynode/.style={circle, draw=violet!75!black, fill=magenta!16,
+                minimum size=8mm, inner sep=0pt, font=\small},
+  fcell/.style={draw=teal!65!black, fill=teal!30, rounded corners=2pt,
+                minimum width=9mm, minimum height=8mm, font=\small\bfseries},
+  bcell/.style={draw=cyan!70!black, fill=cyan!22, rounded corners=2pt,
+                minimum width=9mm, minimum height=8mm, font=\small\bfseries},
+  fwd/.style={->, very thick, teal!85!black},
+  bwd/.style={->, very thick, cyan!75!black},
+  conn/.style={->, thick, black!70},
+  scale=0.9, transform shape
+]
+
+\def\ymid{0} \def\ytop{1.1} \def\ybot{-1.1}
+
+\foreach \x/\idx in {0/0,1/1,2/2,3/i}{
+  \node[xnode](x\idx) at (\x,\ybot) {$x_{\idx}$};
+  \node[ynode](y\idx) at (\x,\ytop+1.0) {$y_{\idx}$};
+  \node[fcell](f\idx) at (\x,\ymid) {$A$};
+  \node[bcell](b\idx) at (\x,\ytop) {$A'$};
+  \draw[conn] (x\idx)--(f\idx);
+  \draw[conn] (f\idx.north) to[out=90,in=-90] (b\idx.south);
+  \draw[conn] (b\idx.north) -- (y\idx.south);
+}
+\node[font=\normalsize] at (2.55,\ybot) {$\cdots$};
+
+\draw[fwd] (-0.6,\ymid) -- (f0);
+\draw[fwd] (f0)--(f1) (f1)--(f2) (f2)--++(0.55,0);
+
+\draw[bwd] (3.6,\ytop) -- (bi);
+\draw[bwd] (bi)--(b2) (b2)--(b1) (b1)--(b0) (b0)--++(-0.55,0);
+
+\node[draw=black!20, fill=white, rounded corners=2pt,
+      font=\scriptsize, align=left, inner sep=4pt]
+  at (1.5,-1.85)
+  {$A$\,: forward cell \quad $A'$\,: backward cell \quad
+   $x_t$\,: input \quad $y_t$\,: output};
+
+\node[font=\small\bfseries] at (1.5, 2.8)
+  {$h_t = [\overrightarrow{h_t}\,;\,\overleftarrow{h_t}]$ \ (concatenation)};
+
+\end{tikzpicture}
+\caption{Bidirectional LSTM (BiLSTM). A forward pass (teal, $A$) processes
+  tokens left-to-right; a backward pass (cyan, $A'$) processes tokens
+  right-to-left. The outputs are concatenated at each position to form a
+  context-aware representation. The two passes are trained independently and
+  merged only at the output.}
+\label{fig:bilstm}
+\end{figure}
+
+The BiLSTM provides richer representations than a unidirectional LSTM.
+ELMo~\cite{peters2018elmo} (Peters et al., 2018), a prominent pre-\bert{}
+contextualised embedding model, uses a stacked BiLSTM and demonstrated that
+contextualised representations transfer effectively to downstream tasks.
+However, the BiLSTM still inherits two critical limitations:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Not truly bidirectional.} The forward and backward passes are
+        trained \emph{separately} and only combined at the output
+        (Eq.~\ref{eq:bilstm}). The two directions never interact during feature
+        extraction; the model cannot, within a single layer, allow left-context
+        and right-context information to jointly influence each other.
+  \item \textbf{Still sequential.} Both passes remain sequential along their
+        respective directions, limiting parallelisation and scalability.
+\end{itemize}

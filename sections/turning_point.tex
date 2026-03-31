@@ -1,0 +1,115 @@
+% =============================================================================
+\section{Why \bert{} Was a Turning Point}
+\label{sec:turning_point}
+% =============================================================================
+
+\subsection{Pre-training Objectives}
+
+\bert{} is pre-trained on two self-supervised tasks using only unlabelled text
+(Wikipedia + BookCorpus, $\approx$3.3 billion words):
+
+\subsubsection{Masked Language Model (MLM)}
+
+Inspired by the Cloze task~\cite{taylor1953cloze}, 15\% of input tokens are
+randomly masked. \bert{} is trained to predict the original token from its
+\emph{bidirectional} context:
+\begin{equation}
+  \mathcal{L}_{\text{MLM}}
+    = -\sum_{i \in \mathcal{M}}
+      \log P\!\left(x_i \mid x_1, \ldots, x_{i-1},
+      \mask{}, x_{i+1}, \ldots, x_n\right)
+  \label{eq:mlm}
+\end{equation}
+where $\mathcal{M}$ is the set of masked positions. Because a correct prediction
+requires integrating context from \emph{both} sides, this objective inherently
+forces the model to learn deeply bidirectional representations. Traditional
+left-to-right language models cannot use this objective without a fundamental
+architectural change.
+
+\subsubsection{Next Sentence Prediction (NSP)}
+
+Many NLP tasks (\textit{e.g.}\ question answering and natural language
+inference) require understanding the \emph{relationship} between two sentences.
+\bert{} is therefore also trained on a binary classification task: given a
+sentence pair $(A, B)$, predict whether $B$ is the sentence that actually
+follows $A$ in the corpus or a randomly sampled sentence. This trains the model
+to encode inter-sentence coherence in the \cls{} token.
+
+\subsection{Fine-tuning Paradigm}
+
+After pre-training, \bert{}'s weights serve as a starting point for any
+downstream NLP task. A lightweight task-specific head is appended:
+
+\begin{itemize}[leftmargin=2em, itemsep=2pt]
+  \item \textbf{Classification} (sentiment, topic): linear layer on the
+        \cls{} representation.
+  \item \textbf{Token labelling / NER}: token-level classifier on each output
+        position.
+  \item \textbf{Extractive QA}: two linear layers predicting span start and end
+        positions.
+  \item \textbf{Natural Language Inference}: classification on \cls{} for
+        entailment / contradiction / neutral.
+\end{itemize}
+
+Fine-tuning requires only 2--4 epochs, making \bert{} highly data-efficient.
+The same pre-trained model handles all four task types with no structural
+changes to the core encoder.
+
+\subsection{Impact: State-of-the-Art Results}
+
+Upon release, \bert{} set new state-of-the-art results across eleven NLP
+benchmarks~\cite{devlin2019bert}:
+
+\begin{table}[H]
+\centering
+\caption{Selected benchmark results at the time of \bert{}'s
+  release~\cite{devlin2019bert}.}
+\label{tab:results}
+\begin{tabular}{llll}
+  \toprule
+  \textbf{Benchmark} & \textbf{Task} & \textbf{Prior SOTA} & \textbf{\bert{}} \\
+  \midrule
+  GLUE~\cite{wang2018glue}
+    & Multi-task NLU            & 72.8  & 80.4 \\
+  SQuAD v1.1~\cite{rajpurkar2016squad}
+    & Reading comprehension (F1) & 91.7  & 93.2 \\
+  SQuAD v2.0~\cite{rajpurkar2018squad2}
+    & Unanswerable QA (F1)       & 78.0  & 83.1 \\
+  MultiNLI~\cite{williams2018multinli}
+    & Natural language inference & 86.7  & 86.7$^{+}$ \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+On SQuAD v1.1, \bert{} exceeded human performance on the F1 metric. Crucially,
+these results came from a \emph{single} pre-trained model fine-tuned separately
+for each task, demonstrating that rich, general-purpose language representations
+can be learned once and deployed everywhere.
+
+\subsection{Why It Was a Paradigm Shift}
+
+Four reasons make \bert{} a genuine turning point in NLP:
+
+\begin{enumerate}[leftmargin=2em, itemsep=3pt]
+  \item \textbf{Deep bidirectionality at scale.} Unlike ELMo's shallow
+        concatenation of separately trained LSTMs, \bert{} integrates left and
+        right context jointly in every layer, yielding fundamentally richer
+        token representations.
+
+  \item \textbf{Transfer learning for NLP.} \bert{} demonstrated that the
+        ``pre-train on unlabelled data, fine-tune on small labelled data''
+        paradigm --- long established in computer vision --- works powerfully for
+        language. This shifted NLP research away from task-specific architectures
+        towards general-purpose pre-trained models.
+
+  \item \textbf{Open release.} Google released \bert{}'s weights, code, and
+        pre-training procedure publicly, enabling rapid community adoption and
+        spawning a generation of derivative models: RoBERTa~\cite{liu2019roberta},
+        DistilBERT~\cite{sanh2019distilbert}, ALBERT~\cite{lan2019albert},
+        domain-specific variants, and multilingual extensions.
+
+  \item \textbf{Contextual representations by design.} Every output embedding
+        depends on the full sentence context through every attention layer,
+        resolving polysemy as an architectural consequence rather than an
+        optional post-processing step.
+\end{enumerate}
